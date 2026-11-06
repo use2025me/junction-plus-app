@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Full Junction Plus logo: "T I" bars + play sign -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="87dp"
+    android:viewportWidth="1080"
+    android:viewportHeight="470">
+    <!-- T top bar -->
+    <path android:fillColor="#009B8E" android:pathData="M0,12 h538 v94 h-538 z" />
+    <!-- T stem (teal) -->
+    <path android:fillColor="#009B8E" android:pathData="M128,147 h107 v317 h-107 z" />
+    <!-- I (yellow) -->
+    <path android:fillColor="#D6C600" android:pathData="M431,147 h107 v317 h-107 z" />
+    <!-- outer ring -->
+    <path
+        android:pathData="M837,12 a222,222 0 1,1 0,444 a222,222 0 1,1 0,-444"
+        android:strokeColor="#009B8E"
+        android:strokeWidth="16"
+        android:fillColor="#00000000" />
+    <!-- inner ring -->
+    <path
+        android:pathData="M837,64 a170,170 0 1,1 0,340 a170,170 0 1,1 0,-340"
+        android:strokeColor="#009B8E"
+        android:strokeWidth="16"
+        android:fillColor="#00000000" />
+    <!-- ticks -->
+    <path
+        android:pathData="M837,12 L837,64 M837,404 L837,456 M615,234 L667,234 M1007,234 L1059,234"
+        android:strokeColor="#009B8E"
+        android:strokeWidth="16" />
+    <!-- play triangle -->
+    <path
+        android:pathData="M778,150 L778,318 L926,234 Z"
+        android:strokeColor="#009B8E"
+        android:strokeWidth="16"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>
