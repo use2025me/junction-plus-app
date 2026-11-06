@@ -62,7 +62,7 @@ class UpdateChecker(private val activity: Activity) {
             append("Version $version is available. You have ${BuildConfig.VERSION_NAME}.")
             if (notes.isNotBlank()) append("\n\n").append(notes)
         }
-        AlertDialog.Builder(activity)
+        AlertDialog.Builder(activity, R.style.Theme_JunctionPlus_Dialog)
             .setTitle("Update available")
             .setMessage(message)
             .setPositiveButton("Update") { _, _ -> startDownload() }

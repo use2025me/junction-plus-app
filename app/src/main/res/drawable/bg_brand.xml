@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deep black with a soft teal glow in the middle -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="70%p"
+        android:centerX="0.5"
+        android:centerY="0.45"
+        android:startColor="#FF0E2B29"
+        android:centerColor="#FF06100F"
+        android:endColor="#FF000000" />
+</shape>

@@ -10,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Thin teal-to-yellow bar while a page loads -->
     <ProgressBar
         android:id="@+id/progress"
         style="@android:style/Widget.Material.ProgressBar.Horizontal"
@@ -17,41 +18,95 @@
         android:layout_height="3dp"
         android:layout_gravity="top"
         android:max="100"
-        android:progressTint="@color/jp_teal"
-        android:progressBackgroundTint="@color/black"
+        android:progressDrawable="@drawable/progress_brand"
         android:visibility="gone" />
 
+    <!-- Branded loading screen shown while the site first opens -->
+    <FrameLayout
+        android:id="@+id/loading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_brand"
+        android:clickable="true"
+        android:focusable="false">
+
+        <LinearLayout
+            android:id="@+id/loading_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="220dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/logo_full" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.35"
+                android:text="@string/brand_wordmark"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <!-- Animated loading line -->
+            <FrameLayout
+                android:id="@+id/loading_track"
+                android:layout_width="160dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="28dp"
+                android:background="#22FFFFFF"
+                android:clipChildren="true">
+
+                <View
+                    android:id="@+id/loading_bar"
+                    android:layout_width="64dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/brand_line" />
+            </FrameLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- No connection -->
     <LinearLayout
         android:id="@+id/offline"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black"
+        android:background="@drawable/bg_brand"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="32dp"
         android:visibility="gone">
 
         <ImageView
-            android:layout_width="200dp"
-            android:layout_height="87dp"
+            android:layout_width="180dp"
+            android:layout_height="78dp"
+            android:alpha="0.9"
             android:contentDescription="@string/app_name"
             android:src="@drawable/logo_full" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="36dp"
+            android:fontFamily="sans-serif-medium"
             android:gravity="center"
             android:text="@string/offline_title"
             android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textSize="22sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:maxWidth="320dp"
             android:text="@string/offline_message"
             android:textColor="@color/grey"
             android:textSize="15sp" />
@@ -59,11 +114,16 @@
         <Button
             android:id="@+id/retry"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@color/jp_teal"
-            android:paddingHorizontal="32dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/button_pill"
+            android:fontFamily="sans-serif-medium"
+            android:minWidth="200dp"
+            android:paddingHorizontal="36dp"
+            android:stateListAnimator="@null"
             android:text="@string/retry"
-            android:textColor="@color/white" />
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="17sp" />
     </LinearLayout>
 </FrameLayout>

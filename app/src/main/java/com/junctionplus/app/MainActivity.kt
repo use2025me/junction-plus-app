@@ -6,7 +6,11 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.net.Uri
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.os.Bundle
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +44,8 @@ class MainActivity : ComponentActivity() {
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
 
     private var keepSplash = true
+    private lateinit var loading: View
+    private var loadingAnim: ObjectAnimator? = null
 
     // Fire TV / Android TV: on-screen pointer driven by the remote
     private var tvRemote: TvRemote? = null
@@ -56,6 +62,9 @@ class MainActivity : ComponentActivity() {
         webView = findViewById(R.id.webview)
         progress = findViewById(R.id.progress)
         offline = findViewById(R.id.offline)
+        loading = findViewById(R.id.loading)
+        keepSplash = false // the branded loading screen takes over from here
+        startLoadingAnimation()
 
         // Keep content clear of the status bar, navigation bar and camera cut-out.
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
@@ -101,13 +110,40 @@ class MainActivity : ComponentActivity() {
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
+            hideLoading()
         } else {
             webView.loadUrl(startUrl(intent))
             UpdateChecker(this).check()
         }
 
-        // Never keep the splash up longer than 3 seconds, even on a slow connection.
-        root.postDelayed({ keepSplash = false }, 3000)
+        // Never keep the loading screen up longer than 12 seconds, even on a slow connection.
+        root.postDelayed({ hideLoading() }, 12000)
+    }
+
+    private fun startLoadingAnimation() {
+        val d = resources.displayMetrics.density
+        findViewById<View>(R.id.loading_content).apply {
+            alpha = 0f; scaleX = 0.94f; scaleY = 0.94f
+            animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(600)
+                .setInterpolator(DecelerateInterpolator()).start()
+        }
+        loadingAnim = ObjectAnimator.ofFloat(
+            findViewById(R.id.loading_bar), View.TRANSLATION_X, -64 * d, 160 * d
+        ).apply {
+            duration = 1100
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+    }
+
+    private fun hideLoading() {
+        if (loading.visibility != View.VISIBLE) return
+        loading.animate().alpha(0f).setDuration(400).withEndAction {
+            loading.visibility = View.GONE
+            loadingAnim?.cancel()
+            loadingAnim = null
+        }.start()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -151,6 +187,7 @@ class MainActivity : ComponentActivity() {
             override fun onPageFinished(view: WebView, url: String?) {
                 progress.visibility = View.GONE
                 keepSplash = false
+                hideLoading()
                 CookieManager.getInstance().flush()
             }
 
@@ -161,6 +198,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 if (request.isForMainFrame) {
                     keepSplash = false
+                    hideLoading()
                     webView.visibility = View.INVISIBLE
                     offline.visibility = View.VISIBLE
                     findViewById<Button>(R.id.retry).requestFocus() // so a TV remote can press it
