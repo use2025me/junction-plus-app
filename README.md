@@ -21,6 +21,15 @@ This link always points at the latest build.
 - Shows a "No connection" screen with a Try again button when offline
 - **Update check:** when the app opens, it checks for a newer version on GitHub and offers to download and install it
 
+## Fire TV and Android TV
+- Install with the Downloader app using code **3530210**
+- The app appears on the TV home screen with the Junction Plus logo tile
+- **Arrow buttons** move the on-screen pointer; it scrolls the page at the top and bottom edges
+- **OK** clicks whatever the pointer is on
+- **Back** goes back a page, or leaves full-screen video
+- In full-screen video, **OK** pauses or plays, and **left/right** skip back or forward 10 seconds
+- **Play/Pause, Rewind and Fast-forward** buttons on the remote control the video
+
 ## How updates work
 Every change pushed to the `main` branch starts the **Build Junction Plus app**
 workflow (Actions tab). It:

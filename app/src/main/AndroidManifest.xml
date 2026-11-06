@@ -5,10 +5,15 @@
     <!-- Lets the built-in update check install new versions -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Works on phones, tablets, Fire TV and Android TV -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
@@ -23,6 +28,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <!-- Shows the app on the Android TV / Fire TV home screen -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
             <!-- Open stream.junctionplus.com links in the app -->

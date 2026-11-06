@@ -80,12 +80,21 @@ class UpdateChecker(private val activity: Activity) {
                 "Allow Junction Plus to install updates, then tap Update again.",
                 Toast.LENGTH_LONG
             ).show()
-            activity.startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:${activity.packageName}")
+            try {
+                activity.startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:${activity.packageName}")
+                    )
                 )
-            )
+            } catch (_: Exception) {
+                // Some TVs (e.g. Fire TV) don't have this screen; the system asks during install instead.
+                Toast.makeText(
+                    activity,
+                    "Allow Junction Plus under Settings > My Fire TV > Developer options > Install unknown apps.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
             return
         }
 
@@ -128,6 +137,10 @@ class UpdateChecker(private val activity: Activity) {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        activity.startActivity(intent)
+        try {
+            activity.startActivity(intent)
+        } catch (_: Exception) {
+            Toast.makeText(activity, "Couldn't open the installer. Please install the update with the Downloader app.", Toast.LENGTH_LONG).show()
+        }
     }
 }

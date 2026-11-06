@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -40,6 +41,9 @@ class MainActivity : ComponentActivity() {
 
     private var keepSplash = true
 
+    // Fire TV / Android TV: on-screen pointer driven by the remote
+    private var tvRemote: TvRemote? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -63,6 +67,21 @@ class MainActivity : ComponentActivity() {
         }
 
         setupWebView()
+
+        if (isTvDevice(this)) {
+            val cursor = CursorView(this)
+            // Sits above the website but below the "No connection" screen.
+            root.addView(
+                cursor, 1,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            )
+            tvRemote = TvRemote(webView, cursor).also { remote ->
+                webView.post { remote.show(true) }
+            }
+        }
 
         findViewById<Button>(R.id.retry).setOnClickListener {
             offline.visibility = View.GONE
@@ -144,6 +163,7 @@ class MainActivity : ComponentActivity() {
                     keepSplash = false
                     webView.visibility = View.INVISIBLE
                     offline.visibility = View.VISIBLE
+                    findViewById<Button>(R.id.retry).requestFocus() // so a TV remote can press it
                 }
             }
         }
@@ -197,6 +217,16 @@ class MainActivity : ComponentActivity() {
         fullscreenCallback?.onCustomViewHidden()
         fullscreenCallback = null
         ViewCompat.requestApplyInsets(root)
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val remote = tvRemote
+        if (remote != null && offline.visibility != View.VISIBLE &&
+            remote.handle(event, fullscreenView)
+        ) {
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     private fun isInternal(uri: Uri): Boolean {
