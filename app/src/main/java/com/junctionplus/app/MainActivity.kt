@@ -9,6 +9,9 @@ import android.net.Uri
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.content.res.Configuration
 import android.os.Build
 import android.webkit.JavascriptInterface
@@ -40,6 +43,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private lateinit var webView: WebView
     private lateinit var progress: ProgressBar
+    private lateinit var swipe: SwipeRefreshLayout
+    private var pageAtTop = true
+    private val handler = Handler(Looper.getMainLooper())
+    private val showProgress = Runnable { if (progress.progress < 100) progress.visibility = View.VISIBLE }
     private lateinit var offline: View
 
     // Full-screen video (when the viewer taps the player's full-screen button)
@@ -67,6 +74,7 @@ class MainActivity : ComponentActivity() {
         root = findViewById(R.id.root)
         webView = findViewById(R.id.webview)
         progress = findViewById(R.id.progress)
+        swipe = findViewById(R.id.swipe)
         offline = findViewById(R.id.offline)
         loading = findViewById(R.id.loading)
         keepSplash = false // the branded loading screen takes over from here
@@ -83,6 +91,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setupWebView()
+        setupPullToRefresh()
 
         // Let the video use the whole screen, including around the camera cut-out.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -179,6 +188,15 @@ class MainActivity : ComponentActivity() {
             displayZoomControls = false
             setSupportMultipleWindows(false)
             userAgentString = "$userAgentString JunctionPlusApp/1.0"
+            offscreenPreRaster = true // smoother scrolling
+        }
+        // Give the website the phone's full attention for smooth playback and scrolling.
+        webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, true)
+        webView.overScrollMode = View.OVER_SCROLL_NEVER // pull-to-refresh replaces the edge glow
+        // Long-press only does something in text boxes (e.g. to paste a password).
+        webView.isHapticFeedbackEnabled = false
+        webView.setOnLongClickListener {
+            webView.hitTestResult.type != WebView.HitTestResult.EDIT_TEXT_TYPE
         }
         webView.addJavascriptInterface(JsBridge(), VideoMode.BRIDGE)
         webView.setBackgroundColor(getColor(R.color.black))
@@ -199,11 +217,25 @@ class MainActivity : ComponentActivity() {
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 exitVideoMode() // a new page never starts in video mode
-                progress.visibility = View.VISIBLE
+                pageAtTop = true
+                progress.progress = 0
+                handler.removeCallbacks(showProgress)
+                handler.postDelayed(showProgress, 300) // only show the bar if loading is slow
+            }
+
+            override fun onPageCommitVisible(view: WebView, url: String?) {
+                view.evaluateJavascript(Polish.SCRIPT, null)
+                view.evaluateJavascript(VideoMode.PLAY_HOOK, null)
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
-                progress.visibility = View.GONE
+                handler.removeCallbacks(showProgress)
+                progress.animate().alpha(0f).setDuration(250).withEndAction {
+                    progress.visibility = View.GONE
+                    progress.alpha = 1f
+                }.start()
+                swipe.isRefreshing = false
+                view.evaluateJavascript(Polish.SCRIPT, null)
                 keepSplash = false
                 hideLoading()
                 view.evaluateJavascript(VideoMode.PLAY_HOOK, null)
@@ -227,7 +259,7 @@ class MainActivity : ComponentActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
-                progress.progress = newProgress
+                progress.setProgress(newProgress, true)
             }
 
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {
@@ -282,6 +314,23 @@ class MainActivity : ComponentActivity() {
         fun onVideoPlay() {
             runOnUiThread { updateVideoMode() }
         }
+
+        @JavascriptInterface
+        fun onScrollTop(atTop: Boolean) {
+            pageAtTop = atTop
+        }
+    }
+
+    private fun setupPullToRefresh() {
+        swipe.setColorSchemeColors(getColor(R.color.jp_teal), getColor(R.color.jp_yellow))
+        swipe.setProgressBackgroundColorSchemeColor(0xFF111A1A.toInt())
+        swipe.setOnRefreshListener { webView.reload() }
+        // Only when the page is at the very top, and never during video or on TVs.
+        swipe.setOnChildScrollUpCallback { _, _ ->
+            tvRemote != null || videoMode || fullscreenView != null ||
+                webView.scrollY > 0 || !pageAtTop
+        }
+        if (isTvDevice(this)) swipe.isEnabled = false
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

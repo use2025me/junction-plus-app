@@ -5,10 +5,17 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <WebView
-        android:id="@+id/webview"
+    <!-- Pull down at the top of a page to refresh -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <WebView
+            android:id="@+id/webview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Thin teal-to-yellow bar while a page loads -->
     <ProgressBar
