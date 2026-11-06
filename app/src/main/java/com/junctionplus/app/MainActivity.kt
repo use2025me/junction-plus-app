@@ -9,6 +9,9 @@ import android.net.Uri
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.os.Bundle
+import android.content.res.Configuration
+import android.os.Build
+import android.webkit.JavascriptInterface
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.KeyEvent
@@ -50,6 +53,9 @@ class MainActivity : ComponentActivity() {
     // Fire TV / Android TV: on-screen pointer driven by the remote
     private var tvRemote: TvRemote? = null
 
+    // Phones: video fills the screen when turned sideways
+    private var videoMode = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -71,11 +77,20 @@ class MainActivity : ComponentActivity() {
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            if (videoMode) v.setPadding(0, 0, 0, 0)
+            else v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
 
         setupWebView()
+
+        // Let the video use the whole screen, including around the camera cut-out.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
 
         if (isTvDevice(this)) {
             val cursor = CursorView(this)
@@ -102,6 +117,7 @@ class MainActivity : ComponentActivity() {
             override fun handleOnBackPressed() {
                 when {
                     fullscreenView != null -> exitFullscreen()
+                    videoMode -> exitVideoMode()
                     webView.canGoBack() -> webView.goBack()
                     else -> finish()
                 }
@@ -164,6 +180,7 @@ class MainActivity : ComponentActivity() {
             setSupportMultipleWindows(false)
             userAgentString = "$userAgentString JunctionPlusApp/1.0"
         }
+        webView.addJavascriptInterface(JsBridge(), VideoMode.BRIDGE)
         webView.setBackgroundColor(getColor(R.color.black))
 
         webView.webViewClient = object : WebViewClient() {
@@ -181,6 +198,7 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                exitVideoMode() // a new page never starts in video mode
                 progress.visibility = View.VISIBLE
             }
 
@@ -188,6 +206,7 @@ class MainActivity : ComponentActivity() {
                 progress.visibility = View.GONE
                 keepSplash = false
                 hideLoading()
+                view.evaluateJavascript(VideoMode.PLAY_HOOK, null)
                 CookieManager.getInstance().flush()
             }
 
@@ -254,6 +273,50 @@ class MainActivity : ComponentActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         fullscreenCallback?.onCustomViewHidden()
         fullscreenCallback = null
+        ViewCompat.requestApplyInsets(root)
+    }
+
+    /** Called from the website when a video starts playing. */
+    inner class JsBridge {
+        @JavascriptInterface
+        fun onVideoPlay() {
+            runOnUiThread { updateVideoMode() }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateVideoMode()
+    }
+
+    /** Sideways with a video playing: video fills the screen. Upright: back to normal. */
+    private fun updateVideoMode() {
+        if (tvRemote != null || fullscreenView != null) return
+        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        if (landscape) enterVideoMode() else exitVideoMode()
+    }
+
+    private fun enterVideoMode() {
+        webView.evaluateJavascript(VideoMode.ENTER) { result ->
+            if (result?.contains("on") == true && !videoMode) {
+                videoMode = true
+                progress.visibility = View.GONE
+                WindowInsetsControllerCompat(window, window.decorView).apply {
+                    hide(WindowInsetsCompat.Type.systemBars())
+                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                ViewCompat.requestApplyInsets(root)
+            }
+        }
+    }
+
+    private fun exitVideoMode() {
+        if (!videoMode) return
+        videoMode = false
+        webView.evaluateJavascript(VideoMode.EXIT, null)
+        WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         ViewCompat.requestApplyInsets(root)
     }
 
