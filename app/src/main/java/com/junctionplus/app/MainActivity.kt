@@ -45,6 +45,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var swipe: SwipeRefreshLayout
     private var pageAtTop = true
+    // Host of the page currently showing; the app's own features only answer Junction Plus pages.
+    @Volatile private var currentPageInternal = false
     private val handler = Handler(Looper.getMainLooper())
     private val showProgress = Runnable { if (progress.progress < 100) progress.visibility = View.VISIBLE }
     private lateinit var offline: View
@@ -173,6 +175,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
+        WebView.setWebContentsDebuggingEnabled(false)
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(webView, true) // keeps subscribers signed in
@@ -181,6 +184,12 @@ class MainActivity : ComponentActivity() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            // Lock-down: the website can't read files or other apps' content on the phone.
+            allowFileAccess = false
+            allowContentAccess = false
+            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            safeBrowsingEnabled = true
+            setGeolocationEnabled(false)
             mediaPlaybackRequiresUserGesture = false
             loadWithOverviewMode = true
             useWideViewPort = true
@@ -206,7 +215,13 @@ class MainActivity : ComponentActivity() {
                 val uri = request.url
                 val scheme = uri.scheme?.lowercase()
                 if (scheme == "http" || scheme == "https") {
-                    if (isInternal(uri)) return false
+                    if (isInternal(uri)) {
+                        if (scheme == "http") { // always use the secure version
+                            view.loadUrl(uri.buildUpon().scheme("https").build().toString())
+                            return true
+                        }
+                        return false
+                    }
                     openExternally(uri)
                     return true
                 }
@@ -216,6 +231,7 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                currentPageInternal = url != null && isInternal(Uri.parse(url)) && url.startsWith("https://")
                 exitVideoMode() // a new page never starts in video mode
                 pageAtTop = true
                 progress.progress = 0
@@ -312,11 +328,13 @@ class MainActivity : ComponentActivity() {
     inner class JsBridge {
         @JavascriptInterface
         fun onVideoPlay() {
+            if (!currentPageInternal) return
             runOnUiThread { updateVideoMode() }
         }
 
         @JavascriptInterface
         fun onScrollTop(atTop: Boolean) {
+            if (!currentPageInternal) return
             pageAtTop = atTop
         }
     }
@@ -387,7 +405,12 @@ class MainActivity : ComponentActivity() {
     private fun openExternally(uri: Uri) {
         try {
             val intent = if (uri.scheme == "intent") {
-                Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME)
+                Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME).apply {
+                    // Only allow links that ordinary web pages may open; never the app's own screens.
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                    component = null
+                    selector = null
+                }
             } else {
                 Intent(Intent.ACTION_VIEW, uri)
             }

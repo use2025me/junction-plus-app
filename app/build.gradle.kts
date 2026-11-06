@@ -37,7 +37,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Shrinks and scrambles the app's code so it's much harder to pick apart.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
