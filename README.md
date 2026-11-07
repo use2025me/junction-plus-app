@@ -19,7 +19,7 @@ This link always points at the latest build.
 - The Back button goes back a page (or exits full-screen video)
 - Junction Plus, Uscreen and checkout pages stay in the app; other links open in the browser
 - Shows a "No connection" screen with a Try again button when offline
-- **Update check:** when the app opens, it checks GitHub for a newer version and opens the download link (on TVs it shows the Downloader code). The app never installs anything itself.
+- **Update check:** when the app opens, it checks for a newer version on GitHub and offers to download and install it
 
 ## Fire TV and Android TV
 - Install with the Downloader app using code **3530210**
