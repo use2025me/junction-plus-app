@@ -3,3 +3,6 @@
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+# Shrink unused code but keep names readable (scrambled names can look suspicious to antivirus apps).
+-dontobfuscate
