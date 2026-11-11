@@ -5,5 +5,5 @@
     <string name="offline_title">You\'re offline</string>
     <string name="offline_message">We couldn\'t reach Junction Plus. Check your Wi-Fi or mobile data, then try again.</string>
     <string name="retry">Try again</string>
-    <string name="powered_by">Powered by <b><font color="#009B8E">Devil Stream</font></b></string>
+    <string name="powered_by">Built by <b><font color="#009B8E">Devil Media Group</font></b></string>
 </resources>
