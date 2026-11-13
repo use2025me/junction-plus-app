@@ -17,8 +17,13 @@ object Config {
         "uscreen.io",
         "uscreen.tv",
         "uscreencdn.com",
+        "devilmediagroup.com",
+        "devilmediagroup.workers.dev",
         "stripe.com",
         "stripe.network",
         "paypal.com",
     )
+
+    // Our streaming site: taps on the YouTube logo here stay in the app
+    val STREAM_HOSTS = listOf("junctionplus.com", "devilmediagroup.com", "devilmediagroup.workers.dev")
 }
