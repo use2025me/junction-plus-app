@@ -46,8 +46,8 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="220dp"
-                android:layout_height="96dp"
+                android:layout_width="168dp"
+                android:layout_height="73dp"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/logo_full" />
 
@@ -90,7 +90,7 @@
             android:shadowDy="1"
             android:shadowRadius="3"
             android:textColor="@color/white"
-            android:textSize="17sp" />
+            android:textSize="13sp" />
     </FrameLayout>
 
     <!-- No connection -->
@@ -158,6 +158,6 @@
             android:shadowDy="1"
             android:shadowRadius="3"
             android:textColor="@color/white"
-            android:textSize="17sp" />
+            android:textSize="13sp" />
     </LinearLayout>
 </FrameLayout>
