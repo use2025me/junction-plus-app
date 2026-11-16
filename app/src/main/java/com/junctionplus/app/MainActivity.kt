@@ -499,7 +499,23 @@ class MainActivity : ComponentActivity() {
 
     private fun startUrl(intent: Intent?): String {
         val data = intent?.data
-        return if (data != null && isInternal(data)) data.toString() else Config.HOME_URL
+        if (data != null && isInternal(data)) return data.toString()
+        return lastPage()?.toString() ?: Config.HOME_URL
+    }
+
+    /** Remembers the page you were on, so the app reopens there if you come back within 12 hours. */
+    private fun saveLastPage(url: String?) {
+        if (url.isNullOrEmpty() || !isInternal(Uri.parse(url))) return
+        getSharedPreferences("app", MODE_PRIVATE).edit()
+            .putString("last_url", url).putLong("last_time", System.currentTimeMillis()).apply()
+    }
+
+    private fun lastPage(): Uri? {
+        val prefs = getSharedPreferences("app", MODE_PRIVATE)
+        val url = prefs.getString("last_url", null) ?: return null
+        val age = System.currentTimeMillis() - prefs.getLong("last_time", 0L)
+        if (age > 12L * 60 * 60 * 1000) return null
+        return Uri.parse(url).takeIf { isInternal(it) }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -518,6 +534,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        saveLastPage(webView.url)
         webView.onPause()
         CookieManager.getInstance().flush()
         super.onPause()
